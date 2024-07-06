@@ -13,11 +13,11 @@
 * Allow adding and displaying of pets.
 */
 
-/* RELEASE 2 (coming soon)
+/* RELEASE 2
 * Allow searching of pets.
 */
 
-/* RELEASE 3 (coming soon)
+/* RELEASE 3
 * Allow for updating and removing pets.
 */
 
@@ -68,7 +68,7 @@ public class PetDatabase {
         
         // Keep asking the user what to do until they choose to exit the program.
         int userChoice = -1;
-        while (userChoice != 9) {
+        while (userChoice != 0) {
             // Find out what the user wants to do.
             userChoice = getUserChoice();
 
@@ -89,14 +89,25 @@ public class PetDatabase {
                 case 4:
                     searchPetsByAge();
                     break;
+
+                case 5:
+                    updatePet();
+                    break;
+
+                case 6:
+                    removePet();
+                    break;
                     
                 // DEV TEST OPTION - adds pets to database to facilitate testing
                 case 9:
                     populateSampleData();
                     break;
 
-                default:
+                case 0:
                     printL("Goodbye");
+                    break;
+
+                default:
                     break;
             }
             
@@ -116,17 +127,19 @@ public class PetDatabase {
         printL("2) Add new pets");
         printL("3) Search pets by name");
         printL("4) Search pets by age");
+        printL("5) Update pet");
+        printL("6) Remove pet");
         //printL("9) *** Populate sample pet data (Used for testing)");
         printL("0) Exit program");
         
         // Get user input
         int userChoice = -1;
         s = new Scanner(System.in);
-        while ((userChoice < 0 || userChoice > 4) && userChoice != 9) {
+        while ((userChoice < 0 || userChoice > 6) && userChoice != 9) {
             print("Your choice: ");
             userChoice = s.nextInt();
             
-            if ((userChoice < 0 || userChoice > 4) && userChoice != 9) {
+            if ((userChoice < 0 || userChoice > 6) && userChoice != 9) {
                 printL("*** INVALID CHOICE ***");
             }
         }
@@ -180,6 +193,7 @@ public class PetDatabase {
         petCount++;
     }
 
+    // This method displays search results by name.
     private static void searchPetsByName() {
         // Get search information from the user.
         s = new Scanner(System.in);
@@ -202,6 +216,7 @@ public class PetDatabase {
         showSearchResults(searchResults, resultCount);
     }
 
+    // This method displays search results by age.
     private static void searchPetsByAge() {
         // Get search information from the user.
         s = new Scanner(System.in);
@@ -231,6 +246,66 @@ public class PetDatabase {
             printTableRow(i, results[i].getName(), results[i].getAge());
         }
         printTableFooter(resultCount);
+    }
+
+    // This method updates the name and age of a pet.
+    private static void updatePet() throws InvalidArgumentException {
+        // Display the list of pets and ask the user which pet they want to update.
+        showAllPets();
+
+        print("Enter the ID of the pet you want to update: ");
+        int updateID = s.nextInt();
+
+        // Display the current name and age for the selected pet.
+        printL("You selected " + pets[updateID].getName() + " " + pets[updateID].getAge());
+
+        // Ask for updated information for the selected pet.
+        s = new Scanner(System.in);
+        print("Enter updated name and age for this pet: ");
+        String updateInfoLine = s.nextLine();
+        String[] updateInfo = parseArgument(updateInfoLine);
+
+        // Update the information for the selected pet.
+        pets[updateID].setName(updateInfo[0]);
+        pets[updateID].setAge(Integer.parseInt(updateInfo[1]));
+
+        // Display the updated list of pets.
+        printL("Here is the updated list of pets:");
+        showAllPets();
+    }
+
+    // This method prompts the user for the index of the pet to delete, then removes the pet from the array.
+    private static void removePet() {        
+        // Display the list of pets and ask the user which pet they want to remove.
+        showAllPets();        
+        s = new Scanner(System.in);
+        print("Enter the ID of the pet you want to remove: ");
+        int removeID = s.nextInt();
+        
+        // Store the info of the pet being removed
+        String removedName = pets[removeID].getName();
+        int removedAge = pets[removeID].getAge();
+        
+        // Create a copy of the pets variable with the selected item removed
+        Pet[] petsNew = new Pet[100];
+        int petsNewIndex = 0;
+        for (int i = 0; i < petCount; i++) {
+            if (i != removeID) {
+                petsNew[petsNewIndex] = new Pet(pets[i].getName(), pets[i].getAge());
+                petsNewIndex++;
+            }
+        }
+        
+        // Re-create the list of pets from the copy
+        pets = petsNew;
+        petCount--;
+        
+        // Display information about the removed pet.
+        printL("Removed " + removedName + " " + removedAge);
+
+        // Display the updated list of pets.
+        printL("Here is the updated list of pets:");
+        showAllPets();
     }
 
 
