@@ -1,0 +1,3 @@
+When searching by name or age, the search results do not have the correct ID. 
+Fixing this will require the search results to use a different Pet object that includes a variable for the ID.
+

@@ -81,6 +81,14 @@ public class PetDatabase {
                 case 2:
                     addPets();
                     break;
+
+                case 3:
+                    searchPetsByName();
+                    break;
+
+                case 4:
+                    searchPetsByAge();
+                    break;
                     
                 // DEV TEST OPTION - adds pets to database to facilitate testing
                 case 9:
@@ -106,18 +114,19 @@ public class PetDatabase {
         printL("What would you like to do?");
         printL("1) View all pets");
         printL("2) Add new pets");
-        //printL("3) Remove a pet");
-        //printL("4) Search pets by age");
+        printL("3) Search pets by name");
+        printL("4) Search pets by age");
+        //printL("9) *** Populate sample pet data (Used for testing)");
         printL("0) Exit program");
         
         // Get user input
         int userChoice = -1;
         s = new Scanner(System.in);
-        while ((userChoice < 0 || userChoice > 2) && userChoice != 9) {
+        while ((userChoice < 0 || userChoice > 4) && userChoice != 9) {
             print("Your choice: ");
             userChoice = s.nextInt();
             
-            if ((userChoice < 0 || userChoice > 2) && userChoice != 9) {
+            if ((userChoice < 0 || userChoice > 4) && userChoice != 9) {
                 printL("*** INVALID CHOICE ***");
             }
         }
@@ -169,6 +178,59 @@ public class PetDatabase {
     private static void addPet(String name, int age) {
         pets[petCount] = new Pet(name, age);
         petCount++;
+    }
+
+    private static void searchPetsByName() {
+        // Get search information from the user.
+        s = new Scanner(System.in);
+        printL("");
+        print("Enter search phrase: ");
+        String searchPhrase = s.nextLine();
+
+        // Create a new array with the results of the search.
+        int resultCount = 0;
+        Pet[] searchResults = new Pet[100];
+        for (int i = 0; i < petCount; i++) {
+            if (pets[i].getName().contains(searchPhrase)) {
+                searchResults[resultCount] = new Pet(pets[i].getName(), pets[i].getAge());
+                resultCount++;
+            }
+        }
+
+        // Display the results.
+        printL("Found these pets with '" + searchPhrase + "' in the name:");
+        showSearchResults(searchResults, resultCount);
+    }
+
+    private static void searchPetsByAge() {
+        // Get search information from the user.
+        s = new Scanner(System.in);
+        printL("");
+        print("Enter search age: ");
+        int searchAge = s.nextInt();
+
+        // Create a new array with the results of the search.
+        int resultCount = 0;
+        Pet[] searchResults = new Pet[100];
+        for (int i = 0; i < petCount; i++) {
+            if (pets[i].getAge() == searchAge) {
+                searchResults[resultCount] = new Pet(pets[i].getName(), pets[i].getAge());
+                resultCount++;
+            }
+        }
+
+        // Display the results.
+        printL("Found these pets with age of " + searchAge + ":");
+        showSearchResults(searchResults, resultCount);
+    }
+
+    // This method displays a list of all pets in the pets array.
+    private static void showSearchResults(Pet[] results, int resultCount) {
+        printTableHeader();
+        for (int i = 0; i < resultCount; i++) {
+            printTableRow(i, results[i].getName(), results[i].getAge());
+        }
+        printTableFooter(resultCount);
     }
 
 
