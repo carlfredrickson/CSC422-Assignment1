@@ -34,9 +34,14 @@ public class PetDatabase {
         private String name;
         private int age;
 
-        public Pet(String thisName, int thisAge) {
-            name = thisName;
-            age = thisAge;
+        public Pet(String thisName, int thisAge) throws InvalidAgeException {
+            if (thisAge >= 1 && thisAge <= 20) {
+                name = thisName;
+                age = thisAge;
+            }
+            else {
+                throw new InvalidAgeException();
+            }
         }
 
         public String getName() {
@@ -58,14 +63,15 @@ public class PetDatabase {
 
 
     // Global variables for the program.
-    static Pet[] pets = new Pet[100];
+    static final int CAPACITY = 5;
+    static Pet[] pets = new Pet[CAPACITY];
     static int petCount = 0;
     static Scanner s;
 
 
     // This main method uses a loop and a switch statement to allow the user to choose what they want to do.
     // Other methods carry out the actions chosen by the user. 
-    public static void main(String[] args) throws FileNotFoundException, InvalidArgumentException {
+    public static void main(String[] args) throws FileNotFoundException, InvalidArgumentException, FullDatabaseException, InvalidAgeException {
         // Introduce the program.
         printL("Pet Database Program");
         printL("********************");
@@ -167,7 +173,7 @@ public class PetDatabase {
     }
 
     // This method allows the user to add 1 or more pets to the database.
-    private static void addPets() throws InvalidArgumentException {
+    private static void addPets() throws InvalidArgumentException, FullDatabaseException, InvalidAgeException {
         s = new Scanner(System.in);
         String line = "";
         
@@ -182,7 +188,17 @@ public class PetDatabase {
             // Exit the while statement if 'done' was entered
             if (!line.equals("done")) {
                 String[] petInfo = parseArgument(line);
-                addPet(petInfo[0], Integer.parseInt(petInfo[1]));
+                try {
+                    addPet(petInfo[0], Integer.parseInt(petInfo[1]));
+                }
+                catch (FullDatabaseException e) {
+                    printL(e.getMessage());
+                    // If the database is full, don't continue prompting for more pets to add.
+                    break;
+                }     
+                catch (InvalidAgeException e) {
+                    printL(e.getMessage());
+                }           
             }
         }
     }
@@ -198,13 +214,18 @@ public class PetDatabase {
     }
 
     // This method creates a new Pet object and adds it to the pets array.
-    private static void addPet(String name, int age) {
-        pets[petCount] = new Pet(name, age);
-        petCount++;
+    private static void addPet(String name, int age) throws FullDatabaseException, InvalidAgeException {
+        if (petCount < CAPACITY) {
+            pets[petCount] = new Pet(name, age);
+            petCount++;
+        }
+        else {
+            throw new FullDatabaseException();
+        }
     }
 
     // This method displays search results by name.
-    private static void searchPetsByName() {
+    private static void searchPetsByName() throws InvalidAgeException {
         // Get search information from the user.
         s = new Scanner(System.in);
         printL("");
@@ -227,7 +248,7 @@ public class PetDatabase {
     }
 
     // This method displays search results by age.
-    private static void searchPetsByAge() {
+    private static void searchPetsByAge() throws InvalidAgeException {
         // Get search information from the user.
         s = new Scanner(System.in);
         printL("");
@@ -285,7 +306,7 @@ public class PetDatabase {
     }
 
     // This method prompts the user for the index of the pet to delete, then removes the pet from the array.
-    private static void removePet() {        
+    private static void removePet() throws InvalidAgeException {        
         // Display the list of pets and ask the user which pet they want to remove.
         showAllPets();        
         s = new Scanner(System.in);
@@ -358,6 +379,19 @@ public class PetDatabase {
         }
     }
 
+    // This custom exception is thrown when a new pet cannot be added because the database is full.
+    public static class FullDatabaseException extends Exception {
+        public FullDatabaseException() {
+            super("ERROR - The pet database cannot hold any more records.");
+        }
+    }
+
+    public static class InvalidAgeException extends Exception {
+        public InvalidAgeException() {
+            super("ERROR - The age must be between 1 and 20.");
+        }
+    }
+
 
     // UTILITY METHODS
 
@@ -397,14 +431,13 @@ public class PetDatabase {
     }
 
     // This is used to make testing and debugging easier.
-    public static void populateSampleData() {
+    public static void populateSampleData() throws FullDatabaseException, InvalidAgeException {
         addPet("Toby", 7);
         addPet("Norman", 1);
         addPet("Rover", 6);
         addPet("Princess", 7);
         addPet("Raja", 4);
         addPet("Lumen", 5);
-        addPet("Jake", 9);
         printL("Added sample pets to database.");
     }
 }
