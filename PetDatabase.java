@@ -123,6 +123,9 @@ public class PetDatabase {
                 userChoice = -1;
             }
         }
+
+        // Before exiting the program, save the pet records to the file.
+        saveDatabase();
     }
 
     // This method shows the user the main menu and returns the selected option.
