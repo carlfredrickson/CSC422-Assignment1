@@ -22,6 +22,9 @@
 */
 
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.Scanner;
 
 public class PetDatabase {
@@ -62,9 +65,13 @@ public class PetDatabase {
 
     // This main method uses a loop and a switch statement to allow the user to choose what they want to do.
     // Other methods carry out the actions chosen by the user. 
-    public static void main(String[] args) throws InvalidArgumentException {
+    public static void main(String[] args) throws FileNotFoundException, InvalidArgumentException {
+        // Introduce the program.
         printL("Pet Database Program");
         printL("********************");
+
+        // Load pet records from the file.
+        loadDatabase();
         
         // Keep asking the user what to do until they choose to exit the program.
         int userChoice = -1;
@@ -306,6 +313,36 @@ public class PetDatabase {
         // Display the updated list of pets.
         printL("Here is the updated list of pets:");
         showAllPets();
+    }
+
+    // This method loads pets from the "pets.txt" file into the pets array.
+    private static void loadDatabase() throws InvalidArgumentException, FileNotFoundException {
+        try {
+            s = new Scanner(new File("pets.txt"));
+
+            // Loop through each line of the file and add a pet record to the database.
+            while (s.hasNextLine()) {
+                String line = s.nextLine();
+                String[] petInfo = parseArgument(line);
+                addPet(petInfo[0], Integer.parseInt(petInfo[1]));
+            }
+            printL("Successfully loaded pet records from file.");
+        }
+        catch(Exception e) {
+            printL("Error loading pet records from file.");
+            printL("Error Message: " + e.getMessage());
+        }
+    }
+
+    // This method saves pet records to the "pets.txt" file.
+    private static void saveDatabase() throws FileNotFoundException {
+        try (PrintWriter pw = new PrintWriter(new File("pets.txt"))) {
+            // Loop through each pet record and save it to the file.
+            for (int i = 0; i < petCount; i++) {
+                pw.println(pets[i].getName() + " " + pets[i].getAge());
+            }
+        }
+        printL("Successfully saved pet records to file.");
     }
 
 
