@@ -71,7 +71,7 @@ public class PetDatabase {
 
     // This main method uses a loop and a switch statement to allow the user to choose what they want to do.
     // Other methods carry out the actions chosen by the user. 
-    public static void main(String[] args) throws FileNotFoundException, InvalidArgumentException, FullDatabaseException, InvalidAgeException {
+    public static void main(String[] args) throws FileNotFoundException, InvalidInputException, FullDatabaseException, InvalidAgeException {
         // Introduce the program.
         printL("Pet Database Program");
         printL("********************");
@@ -104,11 +104,21 @@ public class PetDatabase {
                     break;
 
                 case 5:
-                    updatePet();
+                    try {
+                        updatePet();
+                    }
+                    catch (InvalidIDException e) {
+                        printL(e.getMessage());
+                    }
                     break;
 
                 case 6:
-                    removePet();
+                    try {
+                        removePet();
+                    }
+                    catch (InvalidIDException e) {
+                        printL(e.getMessage());
+                    }                    
                     break;
                     
                 // DEV TEST OPTION - adds pets to database to facilitate testing
@@ -173,7 +183,7 @@ public class PetDatabase {
     }
 
     // This method allows the user to add 1 or more pets to the database.
-    private static void addPets() throws InvalidArgumentException, FullDatabaseException, InvalidAgeException {
+    private static void addPets() throws InvalidInputException, FullDatabaseException, InvalidAgeException {
         s = new Scanner(System.in);
         String line = "";
         
@@ -185,30 +195,42 @@ public class PetDatabase {
             print("Add pet (name age): ");
             line = s.nextLine();
             
-            // Exit the while statement if 'done' was entered
+            // Exit the while statement if 'done' was entered.
             if (!line.equals("done")) {
-                String[] petInfo = parseArgument(line);
+                // Try to split the input into 2 strings.
+                String[] petInfo = new String[2];
                 try {
-                    addPet(petInfo[0], Integer.parseInt(petInfo[1]));
+                    petInfo = parseArgument(line);
+
+                    // Try to parse the 2 strings to get the name and age.
+                    try {
+                        addPet(petInfo[0], Integer.parseInt(petInfo[1]));
+                    }
+                    catch (FullDatabaseException e) {
+                        printL(e.getMessage());
+                        // If the database is full, don't continue prompting for more pets to add.
+                        break;
+                    }     
+                    catch (InvalidAgeException e) {
+                        printL(e.getMessage());
+                    }
+                    catch(NumberFormatException e) {
+                        printL("ERROR - The input must have 2 values: the name and the age, separated by a space.");
+                    }
                 }
-                catch (FullDatabaseException e) {
+                catch (InvalidInputException e) {
                     printL(e.getMessage());
-                    // If the database is full, don't continue prompting for more pets to add.
-                    break;
-                }     
-                catch (InvalidAgeException e) {
-                    printL(e.getMessage());
-                }           
+                }
             }
         }
     }
 
     // This method parses the line that was entered and returns an array of 2 strings containing the name and age of the pet.
-    // If the specified line does not contain 2 values, an InvalidArgumentException is thrown.
-    private static String[] parseArgument(String line) throws InvalidArgumentException {
+    // If the specified line does not contain 2 values, an InvalidInputException is thrown.
+    private static String[] parseArgument(String line) throws InvalidInputException {
         String[] petInfo = line.split(" ");
         if (petInfo.length != 2) {
-            throw new InvalidArgumentException("*** INVALID ARGUMENT EXCEPTION - '" + line + "' is not a valid input. The input must contain the pet's name and age, separated by a space.");
+            throw new InvalidInputException();
         }
         return petInfo;
     }
@@ -280,67 +302,77 @@ public class PetDatabase {
     }
 
     // This method updates the name and age of a pet.
-    private static void updatePet() throws InvalidArgumentException {
+    private static void updatePet() throws InvalidInputException, InvalidIDException {
         // Display the list of pets and ask the user which pet they want to update.
         showAllPets();
 
         print("Enter the ID of the pet you want to update: ");
         int updateID = s.nextInt();
 
-        // Display the current name and age for the selected pet.
-        printL("You selected " + pets[updateID].getName() + " " + pets[updateID].getAge());
+        try {
+            // Display the current name and age for the selected pet.
+            printL("You selected " + pets[updateID].getName() + " " + pets[updateID].getAge());
 
-        // Ask for updated information for the selected pet.
-        s = new Scanner(System.in);
-        print("Enter updated name and age for this pet: ");
-        String updateInfoLine = s.nextLine();
-        String[] updateInfo = parseArgument(updateInfoLine);
+            // Ask for updated information for the selected pet.
+            s = new Scanner(System.in);
+            print("Enter updated name and age for this pet: ");
+            String updateInfoLine = s.nextLine();
+            String[] updateInfo = parseArgument(updateInfoLine);
 
-        // Update the information for the selected pet.
-        pets[updateID].setName(updateInfo[0]);
-        pets[updateID].setAge(Integer.parseInt(updateInfo[1]));
+            // Update the information for the selected pet.
+            pets[updateID].setName(updateInfo[0]);
+            pets[updateID].setAge(Integer.parseInt(updateInfo[1]));
 
-        // Display the updated list of pets.
-        printL("Here is the updated list of pets:");
-        showAllPets();
+            // Display the updated list of pets.
+            printL("Here is the updated list of pets:");
+            showAllPets();
+        }
+        catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+            throw new InvalidIDException();
+        }        
     }
 
     // This method prompts the user for the index of the pet to delete, then removes the pet from the array.
-    private static void removePet() throws InvalidAgeException {        
+    private static void removePet() throws InvalidAgeException, InvalidIDException {        
         // Display the list of pets and ask the user which pet they want to remove.
         showAllPets();        
         s = new Scanner(System.in);
         print("Enter the ID of the pet you want to remove: ");
         int removeID = s.nextInt();
         
-        // Store the info of the pet being removed
-        String removedName = pets[removeID].getName();
-        int removedAge = pets[removeID].getAge();
-        
-        // Create a copy of the pets variable with the selected item removed
-        Pet[] petsNew = new Pet[100];
-        int petsNewIndex = 0;
-        for (int i = 0; i < petCount; i++) {
-            if (i != removeID) {
-                petsNew[petsNewIndex] = new Pet(pets[i].getName(), pets[i].getAge());
-                petsNewIndex++;
+        try {
+            // Store the info of the pet being removed.
+            String removedName = pets[removeID].getName();
+            int removedAge = pets[removeID].getAge();
+            
+            // Create a copy of the pets variable with the selected item removed
+            Pet[] petsNew = new Pet[CAPACITY];
+            int petsNewIndex = 0;
+            for (int i = 0; i < petCount; i++) {
+                if (i != removeID) {
+                    petsNew[petsNewIndex] = new Pet(pets[i].getName(), pets[i].getAge());
+                    petsNewIndex++;
+                }
             }
-        }
-        
-        // Re-create the list of pets from the copy
-        pets = petsNew;
-        petCount--;
-        
-        // Display information about the removed pet.
-        printL("Removed " + removedName + " " + removedAge);
+            
+            // Re-create the list of pets from the copy
+            pets = petsNew;
+            petCount--;
+            
+            // Display information about the removed pet.
+            printL("Removed " + removedName + " " + removedAge);
 
-        // Display the updated list of pets.
-        printL("Here is the updated list of pets:");
-        showAllPets();
+            // Display the updated list of pets.
+            printL("Here is the updated list of pets:");
+            showAllPets();
+        }
+        catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+            throw new InvalidIDException();
+        }        
     }
 
     // This method loads pets from the "pets.txt" file into the pets array.
-    private static void loadDatabase() throws InvalidArgumentException, FileNotFoundException {
+    private static void loadDatabase() throws InvalidInputException, FileNotFoundException {
         try {
             s = new Scanner(new File("pets.txt"));
 
@@ -372,13 +404,6 @@ public class PetDatabase {
 
     // EXCEPTION CLASSES
 
-    // This custom exception is thrown when the user enters an invalid input for a pet's name and age.
-    public static class InvalidArgumentException extends Exception {
-        public InvalidArgumentException(String message) {
-            super(message);
-        }
-    }
-
     // This custom exception is thrown when a new pet cannot be added because the database is full.
     public static class FullDatabaseException extends Exception {
         public FullDatabaseException() {
@@ -389,6 +414,19 @@ public class PetDatabase {
     public static class InvalidAgeException extends Exception {
         public InvalidAgeException() {
             super("ERROR - The age must be between 1 and 20.");
+        }
+    }
+
+    // This custom exception is thrown when the user enters an invalid input for a pet's name and age.
+    public static class InvalidInputException extends Exception {
+        public InvalidInputException() {
+            super("ERROR - The input must have 2 values: the name and the age, separated by a space.");
+        }
+    }
+    
+    public static class InvalidIDException extends Exception {
+        public InvalidIDException() {
+            super("ERROR - The ID entered is not valid. You must enter an ID that from the list of pets.");
         }
     }
 
